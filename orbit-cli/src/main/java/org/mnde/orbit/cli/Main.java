@@ -18,13 +18,14 @@ public final class Main {
         }
 
         String filePath = args[1];
-        Object input;
 
-        // Read file
+        // Read + parse JSON (fail-fast on error)
+        final Object input;
         try {
             input = MAPPER.readValue(new File(filePath), Map.class);
         } catch (Exception e) {
             error("Invalid JSON or unreadable file");
+            return; // unreachable, but satisfies compiler
         }
 
         // Validate
