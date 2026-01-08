@@ -1,23 +1,51 @@
 package org.mnde.orbit.cli;
 
-import org.mnde.orbit.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mnde.orbit.OrbitValidationResult;
+import org.mnde.orbit.OrbitValidator;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
+import java.util.Map;
 
-/**
- * Orbit CLI — reference validator.
- */
 public final class Main {
 
-    public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.err.println("Usage: orbit <file.json>");
-            System.exit(1);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public static void main(String[] args) {
+        // Usage check
+        if (args.length != 2 || !"validate".equals(args[0])) {
+            usage();
         }
 
-        String json = Files.readString(Path.of(args[0]));
-        OrbitValidator.validate(OrbitParser.parse(json));
-        System.out.println("VALID");
+        String filePath = args[1];
+        Object input;
+
+        // Read file
+        try {
+            input = MAPPER.readValue(new File(filePath), Map.class);
+        } catch (Exception e) {
+            error("Invalid JSON or unreadable file");
+        }
+
+        // Validate
+        OrbitValidationResult result = OrbitValidator.validate(input);
+
+        if (result.isValid()) {
+            System.out.println("VALID");
+            System.exit(0);
+        } else {
+            System.err.println("INVALID: " + result.getCode());
+            System.exit(1);
+        }
+    }
+
+    private static void usage() {
+        System.err.println("Usage: orbit validate <file.json>");
+        System.exit(2);
+    }
+
+    private static void error(String message) {
+        System.err.println(message);
+        System.exit(2);
     }
 }
